@@ -1,8 +1,9 @@
 # pentrix-sqli
 
 [![Python 3.x](https://img.shields.io/badge/python-3.x-blue.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen.svg)](#install)
+[![DBMS engines](https://img.shields.io/badge/DBMS-MySQL%20%7C%20PostgreSQL%20%7C%20MSSQL%20%7C%20Oracle%20%7C%20SQLite-orange.svg)](#dbms-signature-table)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A tiny error-based SQL injection prober. It sends classic break-out payloads
 to each query parameter of a URL, compares each response against the
@@ -12,6 +13,19 @@ database engine.
 
 Detection only: it never extracts data, bypasses authentication, or sends
 anything destructive.
+
+## Contents
+
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [DBMS signature table](#dbms-signature-table)
+- [Install](#install)
+- [Usage](#usage)
+  - [Examples](#examples)
+  - [Sample output](#sample-output)
+- [How it works](#how-it-works)
+- [Ethical use](#ethical-use)
+- [License](#license)
 
 ## Features
 
@@ -24,6 +38,22 @@ anything destructive.
 - Sensible exit codes for scripting: `0` clean, `1` vulnerable found, `2` error
 - Report export with `-o/--output`
 - Zero dependencies: Python 3 standard library only
+
+## Screenshots
+
+**Positive detection: a parameter flagged VULNERABLE with MySQL identified.**
+A local test server returns a canned MySQL error page whenever a quote
+appears in a parameter; the tool matches it against the signature table.
+
+![pentrix-sqli detection](docs/images/detection.png)
+
+**Clean target: no DBMS error signatures triggered.**
+
+![pentrix-sqli clean result](docs/images/clean.png)
+
+**Built-in help (`python3 sqli.py --help`).**
+
+![pentrix-sqli help](docs/images/help.png)
 
 ## DBMS signature table
 
@@ -83,14 +113,14 @@ python3 sqli.py "http://localhost:8000/search?q=test" --timeout 5
 ### Sample output
 
 Against a vulnerable parameter (local test server returning a canned
-MySQL-style error when it sees a quote):
+MySQL-style error when it sees a quote; see the screenshot above):
 
 ```
-Target: http://127.0.0.1:8931/vuln?q=test
+Target: http://127.0.0.1:8937/vuln?q=test
 Parameters: q
 Testing: q
 
-Baseline: HTTP 200, 65 bytes
+Baseline: HTTP 200, 55 bytes
 
 [!] param 'q': VULNERABLE (likely DBMS: MySQL)
     payload "'"                -> HTTP 200, matched 'You have an error in your SQL syntax' (MySQL)
@@ -106,11 +136,11 @@ Result: VULNERABLE
 Against a clean endpoint that just echoes the input:
 
 ```
-Target: http://127.0.0.1:8931/clean?q=test
+Target: http://127.0.0.1:8937/clean?q=test
 Parameters: q
 Testing: q
 
-Baseline: HTTP 200, 65 bytes
+Baseline: HTTP 200, 50 bytes
 
 [+] param 'q': NOT VULNERABLE (no DBMS error signatures triggered)
 
@@ -120,7 +150,7 @@ Result: NOT VULNERABLE
 Error handling (no parameters, unreachable host):
 
 ```
-$ python3 sqli.py "http://127.0.0.1:8931/clean"
+$ python3 sqli.py "http://127.0.0.1:8937/clean"
 Error: URL has no query parameters to test
 
 $ python3 sqli.py "http://127.0.0.1:8999/clean?q=test" --timeout 2
